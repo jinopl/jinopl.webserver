@@ -1,0 +1,5 @@
+- name: Testing Ansible in os
+  debug:
+    msg:
+      - Hello from {{ ansible_distribution }} {{ ansible_distribution_version }}
+      - Hostname is {{ ansible_hostname }}

@@ -1,2 +1,9 @@
 ---
 # tasks file for jinopl.webserver
+- name: Run when os is redhat family
+  include: rhel.yml
+  when: ansible_facts['os_family'] == "RedHat"
+
+- name: Run when os Debian family
+  include: debian.yml
+  when: ansible_facts['os_family'] == "Debian"
