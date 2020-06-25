@@ -1,0 +1,25 @@
+- name: Update cache
+  apt:
+    update_cache: yes
+    cache_valid_time: 3600
+ 
+- name: install aptitude
+  apt:
+    name: aptitude
+    state: latest
+
+- name: Installing common softwares
+  apt:
+    pkg:
+      - htop
+      - git
+      - unzip
+      - software-properties-common
+      - net-tools
+      - python3-pip
+      - python-certbot-apache
+
+- include: swapmgmt.yml
+  when: swap_test_mode
+  tags: notest
+

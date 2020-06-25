@@ -4,3 +4,9 @@
     msg:
       - Hello from  {{ ansible_distribution }} {{ ansible_distribution_version }}
       - Hostname is {{ ansible_hostname }}
+
+- include: debian/preinstall.yml
+
+- include: swapmgmt.yml
+  when: swap_test_mode
+  tags: notest

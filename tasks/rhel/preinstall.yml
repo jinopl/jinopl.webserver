@@ -1,0 +1,17 @@
+- name: Set timezone to Asia/Kolkata
+  timezone:
+    name: Asia/Kolkata
+  notify: restart crond
+
+- name: Installing necessary softwares
+  yum: name="{{item}}" state=present
+  loop:
+    - epel-release
+    - vim
+    - yum-utils
+    - certbot
+    - python2-certbot-apache
+    - mod_ssl
+    - unzip
+    - htop
+    - git

@@ -1,2 +1,13 @@
 ---
 # handlers file for jinopl.webserver
+- name: restart httpd
+  service: name=httpd state=restarted
+
+- name: restart mysql
+  service: name=mysql state=restarted
+
+- name: restart sshd
+  service: name=sshd state=restarted
+
+- name: restart crond
+  service: name=crond state=restarted
