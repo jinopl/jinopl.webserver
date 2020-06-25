@@ -1,7 +1,7 @@
-jinopl.webserver
-================
+Role Name
+=========
 
-Ansible setup for web server
+A brief description of the role goes here.
 
 Requirements
 ------------

@@ -1,3 +1,4 @@
+---
 - name: Testing Ansible in os
   debug:
     msg:
