@@ -2,6 +2,7 @@
   timezone:
     name: Asia/Kolkata
   notify: restart crond
+  tags: notest
 
 - name: Installing necessary softwares
   yum: name="{{ item }}" state=present
