@@ -8,6 +8,11 @@
     name: mysql-server
     state: present
 
+- name: Start and enable mysql
+  service:
+    name: mysql
+    state: started
+    enabled: yes
 ##mysql secure installtion####
 
 - name: set root password
