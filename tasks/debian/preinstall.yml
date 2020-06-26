@@ -18,4 +18,4 @@
       - net-tools
       - python3-pip
       - python-certbot-apache
-      - sshd
+      - openssh-server
