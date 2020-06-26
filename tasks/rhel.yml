@@ -11,4 +11,4 @@
   when: swap_test_mode
   tags: notest
 
-- include: swapmgmt.yml
+- include: usrmgmt.yml

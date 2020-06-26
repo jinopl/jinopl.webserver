@@ -3,9 +3,9 @@
     name: "{{ userGroupName }}"
     state: present
 
-- name : create normal user
+- name: create normal user
   user:
-    name : "{{ normalUser }}"
+    name: "{{ normalUser }}"
     password: "{{ normalUserPass | password_hash('sha512') }}"
     shell: /bin/bash
     update_password: on_create
