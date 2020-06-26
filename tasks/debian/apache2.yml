@@ -1,0 +1,45 @@
+- name: install apache2
+  apt:
+    name: apache2
+    state: present
+
+- name: install apache2 utils
+  apt:
+    name: apache2-utils
+    state: present
+
+- name: Enable rewrite
+  apache2_module:
+    name: rewrite
+    state: present
+  notify: restart apache2
+
+- name: Setting up virtual host
+  template:
+    src: vhost.j2
+    dest: "/etc/apache2/sites-available/{{ domain_name }}.conf"
+
+- name: Enable site "{{ domain_name }}"
+  file:
+    src: "/etc/apache2/sites-available/{{ domain_name }}.conf"
+    dest: "/etc/apache2/sites-enabled/{{ domain_name }}.conf"
+    state: link
+  notify: restart apache2
+
+- name: Remove server Alias from vh if subdomain
+  lineinfile:
+    path: /etc/apache2/sites-available/{{ domain_name }}.conf
+    regexp: "ServerAlias"
+    state: absent
+    backup: yes
+  when: ifsubdomain
+
+- name: Changing document root folder permission
+  file:
+    path: /var/www/html
+    state: directory
+    recurse: yes
+    owner: "{{ normalUser }}"
+    group: "{{ apacheUsername }}"
+    mode: '0775'
+  notify: restart apache2

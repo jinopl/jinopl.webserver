@@ -1,0 +1,11 @@
+<VirtualHost *:80>
+    DocumentRoot {{ documentRoot }}
+    ServerName {{ domain_name }}
+    ServerAlias www.{{ domain_name }}
+    
+    <Directory "{{ documentRoot }}">
+        Options Indexes FollowSymLinks
+        AllowOverride All
+        Require all granted
+    </Directory>
+</VirtualHost>

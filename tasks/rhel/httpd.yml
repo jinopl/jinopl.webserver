@@ -8,3 +8,27 @@
     name: httpd
     state: started
     enabled: yes
+
+- name: setting up virtual host
+  template:
+    src: vhost.j2
+    dest: /etc/httpd/conf.d/{{ domain_name }}.conf
+  notify: restart httpd
+
+- name: Remove server Alias from vh if subdomain
+  lineinfile:
+    path: /etc/httpd/conf.d/{{ domain_name }}.conf
+    regexp: "ServerAlias"
+    state: absent
+    backup: yes
+  when: ifsubdomain
+
+- name: Changing document root folder permission
+  file:
+    path: /var/www/html
+    state: directory
+    recurse: yes
+    owner: "{{ normalUser }}"
+    group: "{{ httpdUsername }}"
+    mode: '0775'
+  notify: restart httpd
