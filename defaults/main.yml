@@ -8,3 +8,10 @@ swap_swappiness: "30"
 swap_file_state: present
 swap_file_create_command: "dd if=/dev/zero of={{ swap_file_path }} bs=1M count={{ swap_file_size_mb }}"
 swap_test_mode: false
+
+######User managment##########
+userGroupName: avangers
+normalUser: ironman
+normalUserPass : lUiHZZo+rxQvRrNikds50sdsdc3@
+sudoUser: hulk
+sudoUserPass: VdEuBNcDIwggV2o1TTObsd#$TniaYj4=

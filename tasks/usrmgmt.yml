@@ -1,0 +1,46 @@
+- name: Create group
+  group:
+    name: "{{ userGroupName }}"
+    state: present
+
+- name : create normal user
+  user:
+    name : "{{ normalUser }}"
+    password: "{{ normalUserPass | password_hash('sha512') }}"
+    shell: /bin/bash
+    update_password: on_create
+    groups:
+      - "{{ userGroupName }}"
+
+- name: Create sudo users
+  user:
+    name: "{{ sudoUser }}"
+    password: "{{ sudoUserPass | password_hash('sha512') }}"
+    shell: /bin/bash
+    update_password: on_create
+    groups:
+      - "{{ userGroupName }}"
+      - wheel
+  when: ansible_facts['os_family'] == "RedHat"
+
+- name: Create sudo users
+  user:
+    name: "{{ sudoUser }}"
+    password: "{{ sudoUserPass | password_hash('sha512') }}"
+    shell: /bin/bash
+    update_password: on_create
+    groups:
+      - "{{ userGroupName }}"
+      - sudo
+  when: ansible_facts['os_family'] == "Debian"
+
+- name: Setting up password authentication for group
+  blockinfile:
+    path: /etc/ssh/sshd_config
+    marker: "## {mark} Ansible manged##"
+    block: |
+      Match Group {{ userGroupName }}
+      PasswordAuthentication yes
+    backup: yes
+  tags: ssh
+  notify: restart sshd
