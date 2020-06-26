@@ -29,10 +29,15 @@
 
 - name: Change mysql root password and keep track in
   shell: |
-    mysql -uroot -p{{ temprootpass.stdout }} --connect-expired-password -e "ALTER USER 'root'@'localhost' IDENTIFIED BY '{{ rootPass }}'; flush privileges; "
+    mysql -uroot -p"{{ temprootpass.stdout }}" --connect-expired-password -e "ALTER USER 'root'@'localhost' IDENTIFIED BY '{{ rootPass }}'; flush privileges; "
+    echo "{{ temprootpass.stdout }}" > ~/oldroot.txt
+  args:
+    creates: ~/oldroot.txt
   register: change_temp_pass
   changed_when: false
 
+- name: setup config for MySql
+  template: src=my.cnf.j2 dest=~/.my.cnf mode=0600
 
 - name: Removes all anonymous user accounts
   mysql_user:
