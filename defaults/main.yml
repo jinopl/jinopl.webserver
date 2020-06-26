@@ -25,3 +25,8 @@ documentRoot: /var/www/html
 domain_name: foo.com
 #True if subdomain or false
 ifsubdomain: true
+
+#######Mysql Managment#########
+rootPass: vTdPK0r6aUzAPs&9*&ZCmpYWK77qMxtY=qwex
+mysqlUser: dbguy
+mysqlUserPassword: xz0LiyG5CsdlkhjyS7yigR8HG1W4mkDjI=

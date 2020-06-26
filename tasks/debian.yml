@@ -6,9 +6,9 @@
       - Hostname is {{ ansible_hostname }}
 
 - include: debian/preinstall.yml
-
 - include: swapmgmt.yml
   when: swap_test_mode
   tags: notest
-
 - include: usrmgmt.yml
+- include: debian/apache2.yml
+- include: debian/mysql.yml

@@ -1,0 +1,49 @@
+- name: install python mysql support
+  pip:
+    name: pymysql
+    state: present
+
+- name: install MySql server
+  apt:
+    name: mysql-server
+    state: present
+
+##mysql secure installtion####
+
+- name: set root password
+  mysql_user:
+    name: root
+    host: "{{ item }}"
+    password: "{{ rootPass }}"
+    check_implicit_admin: yes
+    login_unix_socket: /var/run/mysqld/mysqld.sock
+  with_items:
+    - 127.0.0.1
+    - ::1
+    - localhost
+
+- name: setup config for MySql
+  template: src=my.cnf.j2 dest=~/.my.cnf mode=0600
+
+- name: Removes all anonymous user accounts
+  mysql_user:
+    name: ''
+    host_all: yes
+    state: absent
+    check_implicit_admin: yes
+
+- name: Delete database with name 'test'
+  mysql_db:
+    name: test
+    state: absent
+
+
+### Create mysql users #######
+
+- name: creating mysql user
+  mysql_user:
+    name: "{{ mysqlUser }}"
+    host: '%'
+    password: "{{ mysqlUserPassword }}"
+    priv: '*.*:ALL'
+    state: present

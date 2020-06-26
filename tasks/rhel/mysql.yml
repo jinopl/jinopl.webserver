@@ -1,0 +1,58 @@
+- name: Install the MySQL repo.
+  yum:
+    name: https://dev.mysql.com/get/mysql57-community-release-el7-9.noarch.rpm
+    state: present
+  tags: mysql
+
+- name: install python mysql support
+  pip:
+    name: pymysql
+    state: present
+
+- name: install MySQL server
+  yum:
+    name: mysql-community-server
+    state: present
+  tags: mysql
+
+- name: enabling mysql on boot
+  service:
+    name: mysqld
+    state: started
+    enabled: yes
+  tags: mysql
+
+- name: Fetch temp root password
+  command: awk '$0 ~ "temporary password" {print $11}' /var/log/mysqld.log
+  register: temprootpass
+  changed_when: false
+
+- name: Change mysql root password and keep track in
+  shell: |
+    mysql -uroot -p{{ temprootpass.stdout }} --connect-expired-password -e "ALTER USER 'root'@'localhost' IDENTIFIED BY '{{ rootPass }}'; flush privileges; "
+  register: change_temp_pass
+  changed_when: false
+
+
+- name: Removes all anonymous user accounts
+  mysql_user:
+    name: ''
+    host_all: yes
+    state: absent
+    check_implicit_admin: yes
+
+- name: Delete database with name 'test'
+  mysql_db:
+    name: test
+    state: absent
+
+
+### Create mysql users #######
+
+- name: creating mysql user
+  mysql_user:
+    name: "{{ mysqlUser }}"
+    host: '%'
+    password: "{{ mysqlUserPassword }}"
+    priv: '*.*:ALL'
+    state: present
