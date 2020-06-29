@@ -13,6 +13,7 @@
   template:
     src: vhost.j2
     dest: /etc/httpd/conf.d/{{ domain_name }}.conf
+    force: no
   notify: restart httpd
 
 - name: Remove server Alias from vh if subdomain

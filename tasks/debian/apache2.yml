@@ -18,6 +18,7 @@
   template:
     src: vhost.j2
     dest: "/etc/apache2/sites-available/{{ domain_name }}.conf"
+    force: no
 
 - name: Enable site "{{ domain_name }}"
   file:
