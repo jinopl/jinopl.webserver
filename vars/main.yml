@@ -1,2 +1,16 @@
 ---
 # vars file for jinopl.webserver
+php_packages:
+  - php
+  - php-cli
+  - php-common
+  - php-curl
+  - php-gd
+  - php-imap
+  - php-mcrypt
+  - php-mbstring
+  - php-pdo
+  - php-mysql
+  - php-fileinfo
+  - php-zip
+  - php-xml
