@@ -12,3 +12,5 @@
 - include: usrmgmt.yml
 - include: debian/apache2.yml
 - include: debian/mysql.yml
+  tags: notest
+- include: debian/php.yml

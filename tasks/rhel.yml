@@ -12,3 +12,5 @@
 - include: usrmgmt.yml
 - include: rhel/httpd.yml
 - include: rhel/mysql.yml
+  tags: notest
+- include: rhel/php.yml

@@ -30,3 +30,17 @@ ifsubdomain: true
 rootPass: vTdPK0r6aUzAPs&9*&ZCmpYWK77qMxtY=qwex
 mysqlUser: dbguy
 mysqlUserPassword: xz0LiyG5CsdlkhjyS7yigR8HG1W4mkDjI=
+
+
+########php###############
+remi_repo_url: "http://rpms.famillecollet.com/enterprise/remi-release-{{ ansible_distribution_major_version }}.rpm"
+remi_repo_gpg_key_url: "http://rpms.remirepo.net/RPM-GPG-KEY-remi"
+php_version: '7.3'
+php_packages_state: 'present'
+
+#######phpmyadmin############
+phpmyadmin_enablerepo: "remi-php73"
+phpmyadmin_config_file: /etc/phpmyadmin/config.inc.php
+
+########composer###########
+composer_path: /usr/local/bin/composer
