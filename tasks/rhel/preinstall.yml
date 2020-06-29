@@ -17,3 +17,9 @@
     - htop
     - git
     - openssh-server
+    - python-devel
+
+- name: install dev-tools
+  yum:
+    name: "@Development tools"
+    state: present
