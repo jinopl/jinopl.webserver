@@ -1,7 +1,7 @@
 jinopl.webserver
 ================
 
-Ansible role for webserver.
+Ansible role for webserver. ![CI](https://github.com/jinopl/jinopl.webserver/workflows/CI/badge.svg)
 
 Requirements
 ------------
