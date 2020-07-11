@@ -18,6 +18,7 @@
     - git
     - openssh-server
     - python-devel
+    - python-pip
 
 - name: install dev-tools
   yum:
