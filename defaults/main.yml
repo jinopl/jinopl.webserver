@@ -33,13 +33,59 @@ mysqlUserPassword: xz0LiyG5CsdlkhjyS7yigR8HG1W4mkDjI=
 
 
 ########php###############
-remi_repo_url: "http://rpms.famillecollet.com/enterprise/remi-release-{{ ansible_distribution_major_version }}.rpm"
-remi_repo_gpg_key_url: "http://rpms.remirepo.net/RPM-GPG-KEY-remi"
-php_version: '7.3'
+# PHP version to install, as "MAJOR.MINOR" (e.g. "8.2").
+#   ""     -> use the distribution's default PHP packages
+#             (exception: CentOS/RHEL 7 ships PHP 5.4, so php_el7_default_version
+#             is used there instead).
+#   "X.Y"  -> pin that version. If the OS repositories do not provide it, an
+#             extra repository is added automatically (see php_extra_repo):
+#               Ubuntu      -> ppa:ondrej/php
+#               Debian      -> packages.sury.org/php
+#               RHEL/CentOS -> Remi (remi-phpXY repo on EL7, php:remi-X.Y module on EL8+)
+php_version: ""
+# When to use the extra repository:
+#   auto   -> only when the pinned version is not available from the OS repos
+#   always -> always use it (needs php_version to be set)
+#   never  -> never add it; fail if the pinned version is not available
+php_extra_repo: auto
+php_el7_default_version: '7.3'
 php_packages_state: 'present'
 
+# Extensions installed on Debian/Ubuntu. Each name is prefixed with "php-"
+# (or "phpX.Y-" when php_version is pinned).
+php_debian_extensions:
+  - cli
+  - common
+  - curl
+  - gd
+  - imap
+  - mbstring
+  - mysql
+  - zip
+  - intl
+  - bcmath
+  - xml
+
+# Packages installed on RHEL/CentOS.
+php_rhel_packages:
+  - php
+  - php-cli
+  - php-common
+  - php-gd
+  - php-mbstring
+  - php-mysqlnd
+  - php-pdo
+  - php-xml
+  - php-intl
+  - php-bcmath
+  - php-pecl-zip
+
+remi_repo_url: "https://rpms.remirepo.net/enterprise/remi-release-{{ ansible_distribution_major_version }}.rpm"
+
 #######phpmyadmin############
-phpmyadmin_enablerepo: "remi-php73"
+# Repos to enable when installing phpMyAdmin on RHEL. Empty = the same repos
+# used for PHP (Remi when it is in use, otherwise EPEL).
+phpmyadmin_enablerepo: ""
 phpmyadmin_config_file: /etc/phpmyadmin/config.inc.php
 
 ########composer###########

@@ -1,0 +1,135 @@
+---
+# Install PHP on RHEL/CentOS/Rocky/Alma.
+#   EL7  : the OS ships PHP 5.4, so a version is always pinned (php_version, or
+#          php_el7_default_version when empty) and installed from Remi's remi-phpXY repo.
+#   EL8+ : PHP comes as dnf module streams. A pinned version uses the AppStream
+#          stream php:X.Y when it exists, otherwise Remi's php:remi-X.Y stream.
+#          An empty php_version installs the default stream.
+# Sets php_installed_version ("X.Y") and php_rhel_enablerepo for later tasks.
+
+- name: Validate PHP version settings
+  include_tasks: "{{ role_path }}/tasks/php_validate.yml"
+
+- name: Work out the PHP version to install
+  set_fact:
+    php_rhel_version: >-
+      {{ php_version if php_version | length > 0
+         else (php_el7_default_version if ansible_distribution_major_version == '7' else '') }}
+    php_rhel_enablerepo: ""
+
+- name: Install PHP on EL7 from Remi
+  when: ansible_distribution_major_version == '7'
+  block:
+    - name: Fail if Remi is disabled on EL7
+      fail:
+        msg: >-
+          EL7 only ships PHP 5.4; installing PHP {{ php_rhel_version }} needs the
+          Remi repo, but php_extra_repo is 'never'.
+      when: php_extra_repo == 'never'
+
+    - name: Install EPEL (needed by Remi)
+      yum:
+        name: epel-release
+        state: present
+
+    - name: Install Remi repo
+      yum:
+        name: "{{ remi_repo_url }}"
+        state: present
+
+    - name: Use the remi-php{{ php_rhel_version | replace('.', '') }} repo
+      set_fact:
+        php_rhel_enablerepo: "remi,remi-php{{ php_rhel_version | replace('.', '') }}"
+
+- name: Select the PHP module stream on EL8+
+  when:
+    - ansible_distribution_major_version | int >= 8
+    - php_rhel_version | length > 0
+  block:
+    - name: List PHP module streams
+      command: dnf -q module list php
+      register: php_streams
+      changed_when: false
+
+    - name: Decide whether Remi is needed
+      set_fact:
+        php_use_extra_repo: >-
+          {{ php_extra_repo == 'always'
+             or (php_extra_repo == 'auto'
+                 and php_streams.stdout is not search('(?m)^php\s+' ~ (php_rhel_version | regex_escape) ~ '\s')) }}
+
+    - name: Fail if PHP {{ php_rhel_version }} is not in AppStream and Remi is disabled
+      fail:
+        msg: >-
+          PHP {{ php_rhel_version }} is not available as a module stream on
+          {{ ansible_distribution }} {{ ansible_distribution_major_version }}
+          and php_extra_repo is 'never'.
+      when:
+        - php_extra_repo == 'never'
+        - php_streams.stdout is not search('(?m)^php\s+' ~ (php_rhel_version | regex_escape) ~ '\s')
+
+    - name: Install EPEL (needed by Remi)
+      dnf:
+        name: epel-release
+        state: present
+      when: php_use_extra_repo | bool
+
+    - name: Install Remi repo
+      dnf:
+        name: "{{ remi_repo_url }}"
+        state: present
+        disable_gpg_check: true  # the release RPM ships Remi's keys; packages are still checked
+      when: php_use_extra_repo | bool
+
+    - name: Set the module stream to use
+      set_fact:
+        php_rhel_stream: "{{ ('remi-' if php_use_extra_repo | bool else '') ~ php_rhel_version }}"
+        php_rhel_enablerepo: "{{ 'remi' if php_use_extra_repo | bool else '' }}"
+
+    - name: List PHP module streams again (Remi adds its own)
+      command: dnf -q module list php
+      register: php_streams_all
+      changed_when: false
+
+    - name: Fail if the stream does not exist
+      fail:
+        msg: >-
+          PHP module stream php:{{ php_rhel_stream }} does not exist on
+          {{ ansible_distribution }} {{ ansible_distribution_major_version }}.
+      when: php_streams_all.stdout is not search('(?m)^php\s+' ~ (php_rhel_stream | regex_escape) ~ '\s')
+
+    - name: List enabled PHP module stream
+      command: dnf -q module list --enabled php
+      register: php_enabled_stream
+      changed_when: false
+      failed_when: false
+
+    - name: Enable php:{{ php_rhel_stream }}
+      shell: dnf -y module reset php && dnf -y module enable php:{{ php_rhel_stream }}
+      changed_when: true  # only runs when a change is needed
+      when: php_enabled_stream.stdout is not search('(?m)^php\s+' ~ (php_rhel_stream | regex_escape) ~ '\s')
+
+- name: Install PHP packages
+  package:
+    name: "{{ php_rhel_packages }}"
+    state: "{{ php_packages_state }}"
+    enablerepo: "{{ php_rhel_enablerepo | default(omit, true) }}"
+  notify: restart httpd
+
+- name: Detect installed PHP version
+  command: php -r 'echo PHP_MAJOR_VERSION.".".PHP_MINOR_VERSION;'
+  register: php_detected_version
+  changed_when: false
+
+- name: Record installed PHP version
+  set_fact:
+    php_installed_version: "{{ php_detected_version.stdout | trim }}"
+
+- name: Check the installed PHP version matches the pinned one
+  assert:
+    that: php_installed_version == php_rhel_version
+    fail_msg: >-
+      PHP {{ php_installed_version }} is installed but {{ php_rhel_version }} was
+      requested. Remove the existing PHP packages and re-run to switch versions.
+    quiet: true
+  when: php_rhel_version | length > 0

@@ -1,0 +1,13 @@
+---
+- name: Validate php_version and php_extra_repo
+  assert:
+    that:
+      - php_version is string
+      - php_version | length == 0 or php_version is match('^[0-9]+\.[0-9]+$')
+      - php_extra_repo in ['auto', 'always', 'never']
+      - php_extra_repo != 'always' or php_version | length > 0
+    fail_msg: >-
+      php_version must be "" or "MAJOR.MINOR" (quoted, e.g. "8.2"), and
+      php_extra_repo must be auto, always or never ("always" needs php_version).
+      Got php_version={{ php_version }}, php_extra_repo={{ php_extra_repo }}.
+    quiet: true
