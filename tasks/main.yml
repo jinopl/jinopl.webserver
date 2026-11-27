@@ -1,8 +1,8 @@
 ---
 - name: Run when os is redhat family
-  include: rhel.yml
+  include_tasks: rhel.yml
   when: ansible_facts['os_family'] == "RedHat"
 
 - name: Run when os Debian family
-  include: debian.yml
+  include_tasks: debian.yml
   when: ansible_facts['os_family'] == "Debian"

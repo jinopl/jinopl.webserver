@@ -5,7 +5,12 @@ Ansible role for webserver. ![CI](https://github.com/jinopl/jinopl.webserver/wor
 
 Requirements
 ------------
-- Ansible
+- Ansible 2.15+ (the `ansible` package, which includes the `community.general`,
+  `community.mysql` and `ansible.posix` collections the role uses)
+- `passlib` on the control node (used to hash user passwords)
+
+Supported platforms: Rocky/Alma/RHEL 9, Ubuntu 22.04 and 24.04 (tested in CI with Molecule).
+The MySQL tasks on RHEL still target MySQL 5.7 for EL7 and need updating for EL9.
 
 Role Variables
 --------------
