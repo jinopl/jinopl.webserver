@@ -7,7 +7,9 @@
   service: name=mysql state=restarted
 
 - name: restart sshd
-  service: name=sshd state=restarted
+  service:
+    name: "{{ 'ssh' if ansible_facts['os_family'] == 'Debian' else 'sshd' }}"
+    state: restarted
 
 - name: restart crond
   service: name=crond state=restarted

@@ -1,6 +1,6 @@
 - name: install python mysql support
-  pip:
-    name: pymysql
+  apt:
+    name: python3-pymysql
     state: present
 
 - name: install MySql server

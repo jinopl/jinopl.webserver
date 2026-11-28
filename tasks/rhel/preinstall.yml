@@ -11,14 +11,14 @@
     - vim
     - yum-utils
     - certbot
-    - python2-certbot-apache
+    - python3-certbot-apache
     - mod_ssl
     - unzip
     - htop
     - git
     - openssh-server
-    - python-devel
-    - python-pip
+    - python3-devel
+    - python3-pip
 
 - name: install dev-tools
   yum:

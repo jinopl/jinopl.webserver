@@ -1,36 +1,9 @@
-- name: Installing php and commond modules
-  apt:
-    name:
-      - php
-      - libapache2-mod-php
-      - php-cli
-      - php-common
-      - php-curl
-      - php-gd
-      - php-imap
-      - php-mbstring
-      - php-pdo
-      - php-mysql
-      - php-fileinfo
-      - php-zip
-      - php-intl
-      - php-bcmath
-      - php-xml
-    state: present
-  notify: restart apache2
-
-- name: get php version of box
-  shell: |
-    set -o pipefail
-    php --version | head -n 1 | cut -c 5-7
-  args:
-    executable: /bin/bash
-  register: php_version
-  changed_when: false
+- name: Install PHP
+  include_tasks: "{{ role_path }}/tasks/debian/php_install.yml"
 
 - name: Changing upload size PHP
   lineinfile:
-    dest: /etc/php/{{ php_version.stdout }}/apache2/php.ini
+    dest: /etc/php/{{ php_installed_version }}/apache2/php.ini
     regexp: "upload_max_filesize ="
     line: "upload_max_filesize = 50M"
     backup: yes
@@ -38,7 +11,7 @@
 
 - name: Changing post max size PHP
   lineinfile:
-    dest: /etc/php/{{ php_version.stdout }}/apache2/php.ini
+    dest: /etc/php/{{ php_installed_version }}/apache2/php.ini
     regexp: "post_max_size ="
     line: "post_max_size = 50M"
   notify: restart apache2

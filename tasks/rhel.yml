@@ -5,12 +5,12 @@
       - Hello from {{ ansible_distribution }} {{ ansible_distribution_version }}
       - Hostname is {{ ansible_hostname }}
 
-- include: rhel/preinstall.yml
-- include: swapmgmt.yml
+- import_tasks: rhel/preinstall.yml
+- import_tasks: swapmgmt.yml
   when: swap_test_mode
   tags: notest
-- include: usrmgmt.yml
-- include: rhel/httpd.yml
-- include: rhel/mysql.yml
+- import_tasks: usrmgmt.yml
+- import_tasks: rhel/httpd.yml
+- import_tasks: rhel/mysql.yml
   tags: notest
-- include: rhel/php.yml
+- import_tasks: rhel/php.yml

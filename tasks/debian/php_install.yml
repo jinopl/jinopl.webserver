@@ -1,0 +1,164 @@
+---
+# Install PHP on Debian/Ubuntu.
+#   php_version == ""    -> distro default packages (php, php-<ext>)
+#   php_version == "X.Y" -> versioned packages (phpX.Y, phpX.Y-<ext>). When the
+#                           distro repos do not carry that version, Ondrej Sury's
+#                           repo is added (PPA on Ubuntu, packages.sury.org on Debian).
+# Sets php_installed_version ("X.Y") for later tasks.
+
+- name: Validate PHP version settings
+  include_tasks: "{{ role_path }}/tasks/php_validate.yml"
+
+- name: Check whether the configured apt repos provide PHP {{ php_version }}
+  command: apt-cache show --no-all-versions php{{ php_version }}
+  register: php_repo_check
+  changed_when: false
+  failed_when: false
+  when: php_version | length > 0
+
+- name: Decide whether the extra PHP repo is needed
+  set_fact:
+    php_use_extra_repo: >-
+      {{ php_extra_repo == 'always'
+         or (php_version | length > 0
+             and php_extra_repo == 'auto'
+             and php_repo_check.stdout is not search('(?m)^Version:')) }}
+
+- name: Add ppa:ondrej/php (Ubuntu)
+  when:
+    - php_use_extra_repo | bool
+    - ansible_distribution == 'Ubuntu'
+  # Done by hand instead of `repo: ppa:ondrej/php`, which imports the key with
+  # the deprecated apt-key over hkp://...:80 (often firewalled).
+  block:
+    - name: Look up the PPA signing key fingerprint
+      uri:
+        url: https://api.launchpad.net/1.0/~ondrej/+archive/ubuntu/php
+        return_content: true
+      register: php_ppa_info
+
+    - name: Create /etc/apt/keyrings
+      file:
+        path: /etc/apt/keyrings
+        state: directory
+        mode: '0755'
+
+    - name: Download the PPA signing key over HTTPS
+      get_url:
+        url: "https://keyserver.ubuntu.com/pks/lookup?op=get&options=mr&search=0x{{ php_ppa_info.json.signing_key_fingerprint }}"
+        dest: /etc/apt/keyrings/ondrej-php.asc
+        mode: '0644'
+
+    - name: Add ppa:ondrej/php
+      apt_repository:
+        repo: >-
+          deb [signed-by=/etc/apt/keyrings/ondrej-php.asc]
+          https://ppa.launchpadcontent.net/ondrej/php/ubuntu {{ ansible_distribution_release }} main
+        filename: ondrej-php
+        state: present
+        update_cache: yes
+
+- name: Add packages.sury.org PHP repo (Debian)
+  when:
+    - php_use_extra_repo | bool
+    - ansible_distribution != 'Ubuntu'
+  block:
+    - name: Install prerequisites for the sury repo
+      apt:
+        name:
+          - ca-certificates
+          - apt-transport-https
+        state: present
+
+    - name: Download the sury repo signing key
+      get_url:
+        url: https://packages.sury.org/php/apt.gpg
+        dest: /usr/share/keyrings/deb.sury.org-php.gpg
+        mode: '0644'
+
+    - name: Add the sury repo
+      apt_repository:
+        repo: >-
+          deb [signed-by=/usr/share/keyrings/deb.sury.org-php.gpg]
+          https://packages.sury.org/php/ {{ ansible_distribution_release }} main
+        filename: php-sury
+        state: present
+        update_cache: yes
+
+- name: Re-check that PHP {{ php_version }} is now available
+  command: apt-cache show --no-all-versions php{{ php_version }}
+  register: php_repo_recheck
+  changed_when: false
+  failed_when: false
+  when: php_version | length > 0
+
+- name: Fail if the requested PHP version cannot be installed
+  fail:
+    msg: >-
+      PHP {{ php_version }} is not available for {{ ansible_distribution }}
+      {{ ansible_distribution_release }}
+      {{ '(extra repo disabled: php_extra_repo=never)' if php_extra_repo == 'never'
+         else 'even from the Ondrej Sury repo' }}.
+  when:
+    - php_version | length > 0
+    - php_repo_recheck.stdout is not search('(?m)^Version:')
+
+- name: Install PHP and common modules
+  vars:
+    php_pkg: "php{{ php_version }}"
+  apt:
+    name: >-
+      {{ [php_pkg, 'libapache2-mod-' ~ php_pkg]
+         + (php_debian_extensions | map('regex_replace', '^', php_pkg ~ '-') | list) }}
+    state: "{{ php_packages_state }}"
+  notify: restart apache2
+
+- name: Detect installed PHP version
+  command: php{{ php_version }} -r 'echo PHP_MAJOR_VERSION.".".PHP_MINOR_VERSION;'
+  register: php_detected_version
+  changed_when: false
+
+- name: Record installed PHP version
+  set_fact:
+    php_installed_version: "{{ php_detected_version.stdout | trim }}"
+
+# When several PHP versions are present (e.g. phpMyAdmin pulled in the distro
+# default), make the pinned one the default CLI and the active Apache module.
+- name: Make the pinned PHP version the default CLI and Apache module
+  when: php_version | length > 0
+  block:
+    - name: Check which php binary is the default
+      command: update-alternatives --query php
+      register: php_cli_alternative
+      changed_when: false
+      failed_when: false
+
+    # --set also switches the alternative to manual mode, so it stays put when
+    # other PHP versions get installed later (phpMyAdmin pulls in the newest one).
+    - name: Pin the php command to PHP {{ php_version }}
+      command: update-alternatives --set php /usr/bin/php{{ php_version }}
+      changed_when: true  # only runs when a change is needed
+      when: >-
+        php_cli_alternative.stdout is not search('(?m)^Status: manual$')
+        or php_cli_alternative.stdout is not search('(?m)^Value: /usr/bin/php' ~ (php_version | regex_escape) ~ '$')
+
+    - name: Find enabled mod_php modules
+      find:
+        paths: /etc/apache2/mods-enabled
+        patterns: 'php*.load'
+        file_type: any
+      register: php_enabled_mods
+
+    - name: Disable other mod_php versions
+      command: a2dismod -q {{ item }}
+      changed_when: true  # only runs when a change is needed
+      loop: >-
+        {{ php_enabled_mods.files | map(attribute='path') | map('basename')
+           | map('regex_replace', '\.load$', '') | reject('equalto', 'php' ~ php_version) | list }}
+      notify: restart apache2
+
+    - name: Enable mod_php {{ php_version }}
+      command: a2enmod -q php{{ php_version }}
+      args:
+        creates: /etc/apache2/mods-enabled/php{{ php_version }}.load
+      notify: restart apache2

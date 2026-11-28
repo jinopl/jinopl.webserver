@@ -17,5 +17,5 @@
       - software-properties-common
       - net-tools
       - python3-pip
-      - python-certbot-apache
+      - python3-certbot-apache
       - openssh-server

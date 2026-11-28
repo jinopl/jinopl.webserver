@@ -1,15 +1,18 @@
 galaxy_info:
+  role_name: webserver
+  namespace: jinopl
   author: Jino pl
   description: DevOps
   license: MIT
-  min_ansible_version: 2.9
+  min_ansible_version: '2.15'
   platforms:
-  - name: CentOS
+  - name: EL
     versions:
-    - 7
+    - '9'
   - name: Ubuntu
     versions:
-    - 18.04
+    - jammy
+    - noble
   galaxy_tags:
     - apache
     - mysql
