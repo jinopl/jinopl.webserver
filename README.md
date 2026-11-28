@@ -58,6 +58,12 @@ Including an example of how to use your role (for instance, with variables passe
   vars:
     domain_name: hulk.com
     userGroupName: marvel
+    # Required: the defaults are placeholders and the role stops if they are not set.
+    # Keep real values in Ansible Vault rather than in plain text.
+    normalUserPass: "{{ vault_normal_user_pass }}"
+    sudoUserPass: "{{ vault_sudo_user_pass }}"
+    rootPass: "{{ vault_mysql_root_pass }}"
+    mysqlUserPassword: "{{ vault_mysql_user_pass }}"
 ```    
 License
 -------

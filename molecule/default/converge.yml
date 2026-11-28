@@ -1,6 +1,12 @@
 ---
 - name: Converge
   hosts: all
+  vars:
+    # Test-only values for throwaway containers.
+    normalUserPass: molecule-test-user
+    sudoUserPass: molecule-test-sudo
+    rootPass: molecule-test-root
+    mysqlUserPassword: molecule-test-db
   tasks:
     - name: "Include jinopl.webserver"
       include_role:

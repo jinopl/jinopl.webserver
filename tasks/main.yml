@@ -1,4 +1,17 @@
 ---
+- name: Check that the placeholder passwords have been replaced
+  assert:
+    that: lookup('vars', item) != 'CHANGE_ME'
+    fail_msg: >-
+      {{ item }} is still set to the placeholder CHANGE_ME. Set it in your
+      playbook or inventory (ideally with Ansible Vault).
+    quiet: true
+  loop:
+    - normalUserPass
+    - sudoUserPass
+    - rootPass
+    - mysqlUserPassword
+
 - name: Run when os is redhat family
   include_tasks: rhel.yml
   when: ansible_facts['os_family'] == "RedHat"
